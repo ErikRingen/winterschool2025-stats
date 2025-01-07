@@ -1,0 +1,102 @@
+---
+title: "Making statistics work for (evolutionary language) scientists"
+author: "Erik J. Ringen"
+format:
+  revealjs:
+    incremental: true
+    slide-number: true
+    theme: default
+    smaller: true
+---
+
+# How can statistical models help us answer research questions?
+
+- Quantitative research relies on models with many moving parts (i.e., parameters).
+
+- In all but the simplest models, no single parameter can answer our research question. Direct interpretation of model coefficients is unintuitive at best, misleading at worst.
+
+- We can do better. Use the model to calculate *marginal effects* that are easy to interpret and communicate.
+    - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
+    - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
+
+# In simple models, a parameter might be all we need
+
+:::: {.columns}
+::: {.column width="50%"}
+- Example: do bilingual children have greater cognitive flexibility than monolingual children?
+    - Data: 200 children from some population
+    - Estimand: what is the average difference in cognitive flexibility (measured by a psychometric instrument ranging from 0 to 100) between bilingual and monolingual children?
+:::
+
+::: {.column width="50%"}
+```{r, echo=FALSE}
+library(tidyverse)
+
+N <- 200
+
+bilingual <- sample(c(0, 1), N, replace = TRUE)
+cognitive_flexibility <- rnorm(N, bilingual*0.45, 1)
+cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
+
+d <- data.frame(bilingual = ifelse(bilingual == 0, "monolingual", "bilingual"), cognitive_flexibility = cognitive_flexibility)
+
+ggplot(d, aes(x = bilingual, y = cognitive_flexibility, color = bilingual)) +
+    geom_jitter(alpha = 0.7, width = 0.05) +
+    geom_boxplot(alpha = 0.1) +
+    theme_classic(base_size = 24) +
+    theme(legend.position = "none") +
+    labs(x = "", y = "Cognitive flexibility")
+```
+
+```{r}
+lm(cognitive_flexibility ~ bilingual)
+```
+:::
+
+::::
+
+# Formally defining the estimand
+
+- For a given child, let $Y_i(\text{bilingual})$ be the outcome if the child is bilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{bilingual}) - Y_i(\text{monolingual})]$.
+
+- In other words, we imagine that we could randomly assign each child to be bilingual or monolingual, and then observe the difference in their individual outcomes. So, how does this connect to our model?
+
+- Recall our simple linear model: $Y_i = \alpha + \beta \text{bilingual}_i + \epsilon_i$
+
+- For each child $i$, the expected value of the outcome if the child is bilingual is $Y_i(\text{bilingual})$ = $\alpha + \beta$.
+- The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha$.
+- Therefore the average difference in potential outcomes is simply ($\alpha + \beta$) - $\alpha$ = $\beta$.
+    - It will almost never be this simple in real research contexts.
+
+# Adding complexity: interactions
+
+- What if the effect of bilingualism depends on the child's age (an interaction term)?
+- Formula: $Y_i = \alpha + \beta \text{bilingual}_i + \gamma \text{age}_i + \delta \text{bilingual}_i \times \text{age}_i + \epsilon_i$
+- For each child $i$, the expected value of the outcome if the child is bilingual is $Y_i(\text{bilingual})$ = $\alpha + \beta + \gamma \text{age}_i + \delta \text{age}_i$.
+- The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha + \gamma \text{age}_i$.
+- The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{bilingual}) - Y_i(\text{monolingual})] = \frac{1}{N} \sum_{i=1}^N [(\alpha + \beta + \gamma \text{age}_i + \delta \text{age}_i) - (\alpha + \gamma \text{age}_i)] = \frac{1}{N} \sum_{i=1}^N (\beta + \delta \text{age}_i) = \beta + \delta \bar{\text{age}}$.
+- Thus, the marginal effect is no longer reducible to a single parameter.
+
+# Once we start using generalized linear models, everything interacts!
+
+
+# Many types of marginal effects
+
+- Average marginal effect
+- Marginal effect at the mean
+- Conditional marginal effect
+- Average slope
+- Takeaway: statisticians are terrible at naming things.
+
+---
+
+![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
+
+---
+
+![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow_highlight.png)
+
+# A regression is a machine with many moving parts
+
+
+
