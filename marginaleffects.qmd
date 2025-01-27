@@ -9,6 +9,8 @@ format:
     smaller: true
 ---
 
+# Part 1: Marginal effects
+
 ## About me
 
 - I earned my PhD in Evolutionary Anthropology <span class="fragment strike">during the 447th lunation of the third millennium, when Mars was at an orbital longitude of ~187 degrees</span><span class="fragment"> in May 2023</span>
@@ -19,6 +21,18 @@ format:
 
 ![](figures/confusing_stats.png)
 
+## Regression coefficient table figure here
+
+## Descriptive statistics and data viz
+
+- In contrast, descriptive statistics and data visualization are usually presented in a way that is easy to understand.
+- Why? They present simple contrasts with intuitive units.
+- What if we could do the same for statistical models?
+
+## Marginal effects
+- We can do better. Use the model to calculate *marginal effects* that are easy to interpret and communicate.
+    - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
+    - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
 
 ## How can statistical models help us answer research questions?
 
@@ -111,7 +125,24 @@ lm(cognitive_flexibility ~ bilingual)
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow_highlight.png)
 
-# A regression is a machine with many moving parts
+### A regression is a machine with many moving parts
 
+# Break/Q&A sesion
 
+# Part 2: Work-flow, code review. Fear is the mind killer
 
+### Kim-Jung Gi drawing gif here. Disconnect between what we see in published reserach and how statistical modelling works in practice.
+
+Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
+- Not totally wrong, but leads to anxiety
+
+### Slow is smooth, smooth is fast
+
+### Fit fast, fail fast
+
+- Recall that a regression is a machine with many moving parts. Just as we can't understand the joint behavior from the sum of the parts, we often cannot understand a model's failures from the individual parts.
+
+- Need to simply the model until it works, then gradually add back complexity to diagonose what went wrong.
+
+- Folk theorem of statistical computing: 
+Problems in statistical computing are often caused by problems in the model/data.
