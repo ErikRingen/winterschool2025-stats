@@ -3,13 +3,24 @@ title: "Making statistics work for (evolutionary language) scientists"
 author: "Erik J. Ringen"
 format:
   revealjs:
-    incremental: true
+    incremental: false
     slide-number: true
     theme: default
     smaller: true
 ---
 
-# How can statistical models help us answer research questions?
+## About me
+
+- I earned my PhD in Evolutionary Anthropology <span class="fragment strike">during the 447th lunation of the third millennium, when Mars was at an orbital longitude of ~187 degrees</span><span class="fragment"> in May 2023</span>
+
+- To get from Zurich to here, I travelled <span class="fragment strike">807 light-microseconds</span><span class="fragment"> 242 kilometers</span>
+
+## The way we report statistics is often confusing (and misleading)
+
+![](figures/confusing_stats.png)
+
+
+## How can statistical models help us answer research questions?
 
 - Quantitative research relies on models with many moving parts (i.e., parameters).
 
@@ -19,7 +30,7 @@ format:
     - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
     - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
 
-# In simple models, a parameter might be all we need
+## In simple models, a parameter might be all we need
 
 :::: {.columns}
 ::: {.column width="50%"}
@@ -67,6 +78,10 @@ lm(cognitive_flexibility ~ bilingual)
 - The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha$.
 - Therefore the average difference in potential outcomes is simply ($\alpha + \beta$) - $\alpha$ = $\beta$.
     - It will almost never be this simple in real research contexts.
+
+# Interactions
+
+![](figures/hall_of_mirrors.png)
 
 # Adding complexity: interactions
 
