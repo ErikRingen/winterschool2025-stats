@@ -3,11 +3,24 @@ title: "Making statistics work for (evolutionary language) scientists"
 author: "Erik J. Ringen"
 format:
   revealjs:
-    incremental: false
+    incremental: true
     slide-number: true
     theme: default
     smaller: true
 ---
+
+## Introduction
+
+This session is about how statistics can be in service of science.
+- That point might sound mundane, but I think it is actually profound.
+
+- Key ideas:
+    - Scientist have to learn the language of statistical models
+    - But a lot gets lost in translation, particularly when we try to translate back to substantive scientific questions from the output of statistical models.
+
+- Goals:
+    - Teach you a very general way to translate statistical models back into substantive scientific questions.
+    - 
 
 # Part 1: Marginal effects
 
@@ -21,20 +34,46 @@ format:
 
 ![](figures/confusing_stats.png)
 
-## Regression coefficient table figure here
+## The way we report statistics is often confusing (and misleading)
 
-## Descriptive statistics and data viz
+![](figures/regression_table.png)
 
-- In contrast, descriptive statistics and data visualization are usually presented in a way that is easy to understand.
-- Why? They present simple contrasts with intuitive units.
+---
+
+### In contrast, descriptive statistics and data viz are easy to understand
+
+```{r}
+set.seed(123)
+library(tidyverse)
+N <- 125
+
+multilingual <- sample(c(0, 1), N, replace = TRUE)
+cognitive_flexibility <- rnorm(N, multilingual*0.45, 0.5)
+cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
+
+d <- data.frame(multilingual = ifelse(multilingual == 0, "monolingual", "multilingual"), cognitive_flexibility = cognitive_flexibility)
+
+ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)) +
+    geom_jitter(alpha = 0.7, width = 0.05) +
+    geom_boxplot(alpha = 0.1) +
+    theme_classic(base_size = 24) +
+    theme(legend.position = "none") +
+    labs(x = "", y = "Cognitive flexibility score")
+```
+
+'`r paste0("Monolingual participants have a mean cognitive flexibility score of ", round(mean(d$cognitive_flexibility[d$multilingual=="monolingual"]), 2), ", while multilingual participants have a mean score of ", round(mean(d$cognitive_flexibility[d$multilingual=="multilingual"]), 2), ".")`'
+
+- Simple comparisons with scientifically-meaningful units.
 - What if we could do the same for statistical models?
 
-## Marginal effects
-- We can do better. Use the model to calculate *marginal effects* that are easy to interpret and communicate.
-    - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
-    - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
+## Predictions, not parameters
+- Big idea: rather than interpret specific parameters of a model, we can use the model to make predictions
+    - contrasts between different predictions consitute *marginal effects*
+- The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
 
-## How can statistical models help us answer research questions?
+## Problems with parameters
+
+
 
 - Quantitative research relies on models with many moving parts (i.e., parameters).
 
@@ -80,6 +119,8 @@ lm(cognitive_flexibility ~ bilingual)
 
 ::::
 
+### So we start out advocating for unit-specific contrasts, but then we realize that we need to make a choice about what we want to contrast. So need to define the estimand, and the connection between theory, estimand, and estimator.
+
 # Formally defining the estimand
 
 - For a given child, let $Y_i(\text{bilingual})$ be the outcome if the child is bilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{bilingual}) - Y_i(\text{monolingual})]$.
@@ -92,6 +133,9 @@ lm(cognitive_flexibility ~ bilingual)
 - The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha$.
 - Therefore the average difference in potential outcomes is simply ($\alpha + \beta$) - $\alpha$ = $\beta$.
     - It will almost never be this simple in real research contexts.
+
+# Why we need to define the estimand
+- Redcard dataset: diferences between analysts dissipates once we clearly define the estimand.
 
 # Interactions
 
@@ -131,6 +175,10 @@ lm(cognitive_flexibility ~ bilingual)
 
 # Part 2: Work-flow, code review. Fear is the mind killer
 
+This section is about computation, but it is also about anxiety and the fear of making mistakes.
+
+## Truth: everyone has bugs in their code
+
 ### Kim-Jung Gi drawing gif here. Disconnect between what we see in published reserach and how statistical modelling works in practice.
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
@@ -146,3 +194,8 @@ Statistics can feel like a thankless list of things that all have to be right or
 
 - Folk theorem of statistical computing: 
 Problems in statistical computing are often caused by problems in the model/data.
+
+## Multiverse of madness
+
+- Specification curves
+- Key idea: figure out sensitivity of estimates to reasonable range of model specifications, and which qualitative insights are robust to these choices.
