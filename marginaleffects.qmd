@@ -48,6 +48,7 @@ library(tidyverse)
 N <- 125
 
 multilingual <- sample(c(0, 1), N, replace = TRUE)
+
 cognitive_flexibility <- rnorm(N, multilingual*0.45, 0.5)
 cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
 
@@ -61,19 +62,132 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
     labs(x = "", y = "Cognitive flexibility score")
 ```
 
-'`r paste0("Monolingual participants have a mean cognitive flexibility score of ", round(mean(d$cognitive_flexibility[d$multilingual=="monolingual"]), 2), ", while multilingual participants have a mean score of ", round(mean(d$cognitive_flexibility[d$multilingual=="multilingual"]), 2), ".")`'
+'`r paste0("Monolingual participants have a mean cognitive flexibility score of ", 
+           round(mean(d$cognitive_flexibility[d$multilingual=="monolingual"]), 2),
+           " (SD = ", 
+           round(sd(d$cognitive_flexibility[d$multilingual=="monolingual"]), 2),
+           "), while multilingual participants have a mean score of ", 
+           round(mean(d$cognitive_flexibility[d$multilingual=="multilingual"]), 2),
+           " (SD = ",
+           round(sd(d$cognitive_flexibility[d$multilingual=="multilingual"]), 2),
+           ").")`'
 
 - Simple comparisons with scientifically-meaningful units.
 - What if we could do the same for statistical models?
 
 ## Predictions, not parameters
-- Big idea: rather than interpret specific parameters of a model, we can use the model to make predictions
+- Main idea: rather than directly interpret parameters, use the model to make predictions
     - contrasts between different predictions consitute *marginal effects*
 - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
 
+## In simple models, a parameter might be all we need
+
+:::: {.columns}
+::: {.column width="60%"}
+- Example: do multilingual children have greater cognitive flexibility than monolingual children?
+    - *Data*: 200 children from some population
+    - *Estimand*: what is the average difference in cognitive flexibility (measured by a psychometric instrument ranging from 0 to 100) between bilingual and monolingual children?
+    - *Estimate*: 'Multilingual participants have an average cognitive flexibility score of 12.987 [6.905, 19.069] points higher than monolingual participants.'
+:::
+
+::: {.column width="40%"}
+::: {.fragment}
+```{r, echo=FALSE}
+ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)) +
+    geom_jitter(alpha = 0.7, width = 0.05) +
+    geom_boxplot(alpha = 0.1) +
+    theme_classic(base_size = 24) +
+    theme(legend.position = "none") +
+    labs(x = "", y = "Cognitive flexibility")
+```
+:::
+
+::: {.fragment}
+```{r}
+summary(lm(cognitive_flexibility ~ multilingual))
+```
+:::
+:::
+::::
+
+## A regression is a machine that makes predictions
+
+$$ \text{Cognitive flexibility} = \alpha + \beta \text{Multilingual} + \epsilon $$
+$$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
+
+- The parts of the machine are the parameters ($\alpha, \beta, \sigma$):
+  - To make a prediction for a monolingual child, just take the intercept ($\alpha$).
+  - To make a prediction for a multilingual child, add the coefficient for multilingual ($\beta$) to the intercept.
+- Linear regression is such a simple machine that it offers a 1:1 mapping between the parameters and the estimand (average difference between bilingual and monolingual children).
+
+## Interactions
+
+:::: {.columns}
+
+::: {.column width="60%"}
+- If we add an interaction term (moderator) to our model, the estimand is no longer reducible to a single parameter.
+- To see why, let's formalize the estimand:
+  - For a given child, let $Y_i(\text{multilingual})$ be the outcome if the child is bilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. 
+  - The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{multilingual}) - Y_i(\text{monolingual})]$.
+:::
+
+::: {.column width="40%"}
+::: {.fragment}
+![](figures/ATE.png){height="25%"}
+:::
+:::
+
+::::
+
+## Non-linear predictors
+
+- What if we want to contrast the effect of bilingualism at different levels of age?
+- Quadratic terms:
+
+$$ \text{Cognitive flexibility} = \alpha + \beta \text{Multilingual} + \beta \text{Age} + \beta \text{Multilingual} \times \text{Age} + \epsilon $$
+
+## Generalized linear models
+
+- non-collapsiblity of odds ratios
+- sign-reversals on the log scale!
+
+## Marginal effects in practice
+
+- average marginal effect (aka average treatment effect)
+
+## Conditional effects
+
+- we may wish to calculate the effect of multilingualism across different strata (i.e., age)
+- rather than leave age as their original values, we hold them constant
+
+## Non-linearity, continous treatment effects
+
+- average slopes!
+- given a very small change in the predictor, what is the change in the outcome?
+
+## Can marginal effects improve the reliability of science?
+
+## Red Card Dataset (many analysts)
+
+- Football players who were red-carded for conduct in the 2018-2019 season.
+- 100+ analysts, 100+ estimates (check this!)
+
+## Many analysts, many estimates
+
+![](figures/many_analysts1.png)
+
+## But what is the estimand?
+
+![](figures/many_analysts2.png)
+
+
+----
+
+### So we start out advocating for unit-specific contrasts, but then we realize that we need to make a choice about what we want to contrast. So need to define the estimand, and the connection between theory, estimand, and estimator.
+
+### If we continue to interpret the model parameters as if it was a simple linear regression, then we are letting the model dictate the estimand. In this sense, the mechanistic details of the statistical model are changing the estimand, and therefore the scientific question.
+
 ## Problems with parameters
-
-
 
 - Quantitative research relies on models with many moving parts (i.e., parameters).
 
@@ -82,44 +196,6 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 - We can do better. Use the model to calculate *marginal effects* that are easy to interpret and communicate.
     - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
     - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
-
-## In simple models, a parameter might be all we need
-
-:::: {.columns}
-::: {.column width="50%"}
-- Example: do bilingual children have greater cognitive flexibility than monolingual children?
-    - Data: 200 children from some population
-    - Estimand: what is the average difference in cognitive flexibility (measured by a psychometric instrument ranging from 0 to 100) between bilingual and monolingual children?
-:::
-
-::: {.column width="50%"}
-```{r, echo=FALSE}
-library(tidyverse)
-
-N <- 200
-
-bilingual <- sample(c(0, 1), N, replace = TRUE)
-cognitive_flexibility <- rnorm(N, bilingual*0.45, 1)
-cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
-
-d <- data.frame(bilingual = ifelse(bilingual == 0, "monolingual", "bilingual"), cognitive_flexibility = cognitive_flexibility)
-
-ggplot(d, aes(x = bilingual, y = cognitive_flexibility, color = bilingual)) +
-    geom_jitter(alpha = 0.7, width = 0.05) +
-    geom_boxplot(alpha = 0.1) +
-    theme_classic(base_size = 24) +
-    theme(legend.position = "none") +
-    labs(x = "", y = "Cognitive flexibility")
-```
-
-```{r}
-lm(cognitive_flexibility ~ bilingual)
-```
-:::
-
-::::
-
-### So we start out advocating for unit-specific contrasts, but then we realize that we need to make a choice about what we want to contrast. So need to define the estimand, and the connection between theory, estimand, and estimator.
 
 # Formally defining the estimand
 
@@ -171,6 +247,10 @@ lm(cognitive_flexibility ~ bilingual)
 
 ### A regression is a machine with many moving parts
 
+## Hands on session
+
+- 
+
 # Break/Q&A sesion
 
 # Part 2: Work-flow, code review. Fear is the mind killer
@@ -183,6 +263,14 @@ This section is about computation, but it is also about anxiety and the fear of 
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
 - Not totally wrong, but leads to anxiety
+
+## Code review anxiety
+
+- 7 years ago, I had published my first, first-authored paper. The data and code were posted on GitHub.
+
+- A few days after the paper went live, I got a notification for a pull request on my repo: Bret Beheim had found a bug in my code.
+
+- In the end, it was inconsequential. But it could have been a disaster.
 
 ### Slow is smooth, smooth is fast
 
