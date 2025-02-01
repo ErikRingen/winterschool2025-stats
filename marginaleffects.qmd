@@ -388,6 +388,11 @@ $$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
 
 - Rather than setting everything to the mean, what is the average slope if we changed the predictor by a very small amount?
 
+## Custom comparisons
+
+- We don't have to use the default comparisons (group-contrasts or 1-unit changes)
+- Examples (with marginal effects code)
+
 ## Can marginal effects improve the reliability of science?
 
 - On the one hand, we can avoid falling into many of the traps of interpreting model parameters.
@@ -417,11 +422,19 @@ $$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
 
-## Hands on session
+## Breakout session (10 minutes)
 
-- 
+Goal:
+    - Write down the *estimand* for one of your research questions
+        - Remember: this is a unit-specific comparison, ideally with reference to a specific population.
+    - Draft a statistical model that you could use as your *estimator*
+    - Write down the marginaleffects code that would yield your *estimate*
+    - If you don't have the relevant software on your laptop, find a neighbor who does.
+    - Pseudocode is fine!
 
-# Break/Q&A sesion
+## Report-back/Q&A session
+
+- How did it go? What friction did you encounter?
 
 # Part 2: Work-flow, code review. Fear is the mind killer
 
