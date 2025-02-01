@@ -3,6 +3,7 @@ title: "Making statistics work for (evolutionary language) scientists"
 author: "Erik J. Ringen"
 format:
   revealjs:
+    auto-stretch: false
     incremental: true
     slide-number: true
     theme: default
@@ -45,14 +46,17 @@ This session is about how statistics can be in service of science.
 ```{r}
 set.seed(123)
 library(tidyverse)
-N <- 125
+N <- 250
 
 multilingual <- sample(c(0, 1), N, replace = TRUE)
 
-cognitive_flexibility <- rnorm(N, multilingual*0.45, 0.5)
+age <- runif(N, 7, 12)
+age_s <- (age - mean(age)) / sd(age)
+age_c <- age - mean(age)
+cognitive_flexibility <- rnorm(N, multilingual*0.3 + age_s*multilingual*0.2 + age_s*0.1, 0.5)
 cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
 
-d <- data.frame(multilingual = ifelse(multilingual == 0, "monolingual", "multilingual"), cognitive_flexibility = cognitive_flexibility)
+d <- data.frame(multilingual = ifelse(multilingual == 0, "monolingual", "multilingual"), cognitive_flexibility = cognitive_flexibility, age = age, age_c = age_c)
 
 ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)) +
     geom_jitter(alpha = 0.7, width = 0.05) +
@@ -78,7 +82,7 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 ## Predictions, not parameters
 - Main idea: rather than directly interpret parameters, use the model to make predictions
     - contrasts between different predictions consitute *marginal effects*
-- The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
+- The `marginaleffects` package by Vincent Arel-Bundock makes these calculations easy for a wide range of models in both R and Python.
 
 ## In simple models, a parameter might be all we need
 
@@ -87,7 +91,7 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 - Example: do multilingual children have greater cognitive flexibility than monolingual children?
     - *Data*: 200 children from some population
     - *Estimand*: what is the average difference in cognitive flexibility (measured by a psychometric instrument ranging from 0 to 100) between bilingual and monolingual children?
-    - *Estimate*: 'Multilingual participants have an average cognitive flexibility score of 12.987 [6.905, 19.069] points higher than monolingual participants.'
+    - *Estimate*: 'Multilingual participants have an average cognitive flexibility score of 11.908 [5.386, 18.430] points higher than monolingual participants.'
 :::
 
 ::: {.column width="40%"}
@@ -120,7 +124,7 @@ $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
   - To make a prediction for a multilingual child, add the coefficient for multilingual ($\beta$) to the intercept.
 - Linear regression is such a simple machine that it offers a 1:1 mapping between the parameters and the estimand (average difference between bilingual and monolingual children).
 
-## Interactions
+## Interactions imply heterogeneity
 
 :::: {.columns}
 
@@ -128,16 +132,164 @@ $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
 - If we add an interaction term (moderator) to our model, the estimand is no longer reducible to a single parameter.
 - To see why, let's formalize the estimand:
   - For a given child, let $Y_i(\text{multilingual})$ be the outcome if the child is bilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. 
-  - The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{multilingual}) - Y_i(\text{monolingual})]$.
+  - The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{multilingual}) - Y_i(\text{monolingual})]$. Known as the *average treatment effect* (ATE), or average marginal effect (AME).
+  - In our simple linear regression, all children are identical, conditional on their mono/multilingual status, which allows us to reduce the estimand to a single parameter.
 :::
 
 ::: {.column width="40%"}
 ::: {.fragment}
-![](figures/ATE.png){height="25%"}
+![](figures/ATE.png){width="75%"}
 :::
 :::
 
 ::::
+
+## Interactions imply heterogeneity
+
+What if age moderates the effect of multilingualism?
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+m_centered <- lm(cognitive_flexibility ~ multilingual * age_c)
+
+summary(m_centered)
+```
+:::
+
+::: {.column width="40%"}
+```{r}
+ggplot(d, aes(x = age_c, y = cognitive_flexibility, color = multilingual)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    theme_classic(base_size = 28) +
+    theme(legend.title = element_blank()) +
+    scale_color_manual(values = c("monolingual" = "royalblue", 
+                                "multilingual" = "darkorange")) +
+    labs(x = "Age (centered)", y = "Cognitive flexibility")
+```
+:::
+::::
+
+- Which coefficient corresponds to the estimand (average marginal effect)?
+    - None! The AME depends on the distribution of the moderator (age):
+        - The magnitude of the multilingual effect depends on age--now it matters which children we are averaging over.
+
+## Meaning of interaction term is highly contextual
+
+On the previous slide, the interaction term was mean-centered. What if we use the raw age variable instead?
+
+:::: {.columns}
+::: {.column width="60%"}
+```{r}
+m_uncentered <- lm(cognitive_flexibility ~ multilingual * age)
+
+summary(m_uncentered)
+```
+:::
+
+::: {.column width="40%"}
+```{r}
+ggplot(d, aes(x = age, y = cognitive_flexibility, color = multilingual)) +
+    geom_point(alpha = 0.7) +
+    geom_smooth(method = "lm", se = FALSE) +
+    theme_classic(base_size = 28) +
+    theme(legend.title = element_blank()) +
+    scale_color_manual(values = c("monolingual" = "royalblue", 
+                                "multilingual" = "darkorange")) +
+    labs(x = "Age", y = "Cognitive flexibility")
+```
+:::
+::::
+
+- The data visualization looks the same, but the model seems to be telling us something different.
+    - In fact, the effect we are seeking is 'lost in translation'.
+    - By generating predictions from the model, these contradictions will melt away.
+
+## Getting started with `marginaleffects`: predictions
+
+```{r, echo = T}
+library(marginaleffects)
+
+uncentered_model <- lm(cognitive_flexibility ~ multilingual * age, data = d)
+
+preds <- predictions(uncentered_model)
+
+preds |> 
+    as.data.frame() |> 
+    select(rowid, multilingual, age, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
+
+## Getting started with `marginaleffects`: predictions
+
+```{r, echo = T}
+library(marginaleffects)
+
+centered_model <- lm(cognitive_flexibility ~ multilingual * age_c, data = d)
+
+preds <- predictions(centered_model)
+
+preds |> 
+    as.data.frame() |> 
+    select(rowid, multilingual, age_c, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
+
+## From predictions to comparisons
+
+```{r, echo = T}
+comparisons <- comparisons(uncentered_model, variables = "multilingual")
+
+comparisons |> 
+    as.data.frame() |> 
+    select(rowid, contrast, age, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
+
+## Calcualting average marginal effects
+
+```{r, echo = T}
+AME <- avg_comparisons(uncentered_model)
+
+AME |> 
+    as.data.frame() |> 
+    select(term, contrast, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
+
+## marginaleffects can also make plots
+
+```{r, echo = T}
+plot_predictions(uncentered_model, condition = list("multilingual"))
+```
+
+## marginaleffects can also make plots
+
+```{r, echo = T}
+plot_predictions(uncentered_model, condition = list("age"))
+```
+
+## marginaleffects can also make plots
+
+```{r, echo = T}
+plot_predictions(uncentered_model, condition = list("age", "multilingual"))
+```
+
+## marginaleffects can also make plots
+
+- Because the plots are made with `ggplot2`, we can customize them as we like.
+
+```{r, echo = T}
+plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
+    theme_classic(base_size = 24) +
+    theme(legend.title = element_blank()) +
+    scale_color_manual(values = c("monolingual" = "royalblue", 
+                                "multilingual" = "darkorange")) +
+    scale_fill_manual(values = c("monolingual" = "royalblue", 
+                                "multilingual" = "darkorange")) +
+    labs(x = "Age", y = "Cognitive flexibility score")
+```
 
 ## Non-linear predictors
 
@@ -158,12 +310,21 @@ $$ \text{Cognitive flexibility} = \alpha + \beta \text{Multilingual} + \beta \te
 ## Conditional effects
 
 - we may wish to calculate the effect of multilingualism across different strata (i.e., age)
-- rather than leave age as their original values, we hold them constant
+- rather than leave age as their original values, we hold them constantle')
 
 ## Non-linearity, continous treatment effects
 
 - average slopes!
 - given a very small change in the predictor, what is the change in the outcome?
+
+### Interpreting regression models is a full of traps that can substantivey change our conclusions. Working with predictions and marginal effects allows us to avoid many of these traps.
+
+```{r}
+library(marginaleffects)
+
+avg_comparisons(m_centered)
+avg_comparisons(m_uncentered)
+```
 
 ## Can marginal effects improve the reliability of science?
 
@@ -287,3 +448,22 @@ Problems in statistical computing are often caused by problems in the model/data
 
 - Specification curves
 - Key idea: figure out sensitivity of estimates to reasonable range of model specifications, and which qualitative insights are robust to these choices.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+# Model with standardized age
+summary(lm(cognitive_flexibility ~ multilingual * age_s))
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+# Model with raw age
+summary(lm(cognitive_flexibility ~ multilingual * age))
+```
+:::
+::::
+
+:::
