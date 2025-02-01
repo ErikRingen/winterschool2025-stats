@@ -116,7 +116,7 @@ summary(lm(cognitive_flexibility ~ multilingual))
 
 ## A regression is a machine that makes predictions
 
-$$ \text{Cognitive flexibility} = \alpha + \beta \text{Multilingual} + \epsilon $$
+$$ \text{Cognitive flexibility} = \alpha + \beta \times \text{Multilingual} + \epsilon $$
 $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
 
 - The parts of the machine are the parameters ($\alpha, \beta, \sigma$):
@@ -278,7 +278,7 @@ plot_predictions(uncentered_model, condition = list("age", "multilingual"))
 
 ## marginaleffects can also make plots
 
-- Because the plots are made with `ggplot2`, we can customize them as we like.
+Because the plots are made with `ggplot2`, we can customize them as we like.
 
 ```{r, echo = T}
 plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
@@ -291,7 +291,95 @@ plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
     labs(x = "Age", y = "Cognitive flexibility score")
 ```
 
-## Non-linear predictors
+## Generalized linear models
+
+- GLMs such as logistic regression and Poisson regression are also supported by `marginaleffects`.
+
+- Good news for us, because *everything* interacts in a GLM due to the link function (e.g., logit, log, softmax). Extremely easy to mislead ourselves if we try to interpret parameters.
+
+## Logistic regression
+
+- Hypothetical dataset: Touchscreen experiment with Chimpanzees
+    - After viewing a stimulus, the chimpanzee touches the screen on either the 'Agent' or the 'Patient' in a scence.
+    - Estimand: what is the average *difference* in the probability of touching the 'Agent' side between two conditions ('experimental' vs 'control')?
+        - $\frac{1}{N} \sum_{i=1}^N [P(Y_i = \text{Agent} | \text{experimental}) - P(Y_i = \text{Agent} | \text{control})]$
+
+![](figures/chimp_touchscreen.webp)
+
+## Logistic regression
+
+```{r}
+N <- 60
+
+condition <- rep(c("experimental", "control"), N/2)
+sex <- sample(c("male", "female"), N, prob = c(0.35, 0.65), replace = TRUE)
+mu <- 0.4 + (1.5 * (condition == "experimental")) + (0.25 * (sex == "male"))
+
+agent <- rbinom(N, 1, plogis(mu))
+
+d <- data.frame(agent = agent, condition = condition, sex = sex)
+```
+
+$$ \text{Agent} \sim \text{Bernoulli}(\pi) $$
+$$ \pi = \text{logit}^{-1}(\alpha + \beta \times \text{experimental}) $$
+
+```{r}
+logistic_model <- glm(agent ~ condition, data = d, family = binomial)
+
+summary(logistic_model)
+```
+
+## Logistic regression
+
+![](figures/logistic_compression.png){width="70%"}
+
+- Even with just a single predictor, we cannot get our estimate from looking at model coefficients. 
+
+- Due to the link function, the effect of the experimental condition depends on the intercept.
+
+- 'Mechanistic' rather than conceptual interaction.
+    - To get the AME we need to calculate:
+        - $\frac{1}{1 + e^{-(\alpha + \beta \times \text{experimental})}} - \frac{1}{1 + e^{-\alpha}}$
+        
+## *marginaleffects* to the rescue
+
+```{r, echo = T}
+AME <- avg_comparisons(logistic_model, variables = "condition")
+
+AME |> 
+    as.data.frame() |> 
+    select(term, contrast, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
+
+```{r, echo = T}
+plot_predictions(logistic_model, condition = list("condition"))
+```
+
+## Log-linear models
+
+Example: reaction time to a stimulus
+
+$$ 
+
+## Non-linear effects
+
+- Often our hypotheses are only directional, and we don't anticipate or have specific hypotheses about non-linearity
+
+- Again, for GLMs, *all* continous effects are non-linear...
+
+## Marginal effect at the mean
+
+- So far, we have been calculating average marginal effects (AMEs), where we make comparisons changing only the predictor of interest.
+
+- Marginal effect at the mean (MEM): 
+    - 
+
+
+## Average slopes
+
+- Rather than setting everything to the mean, what is the average slope if we changed the predictor by a very small amount?
+
 
 - What if we want to contrast the effect of bilingualism at different levels of age?
 - Quadratic terms:
