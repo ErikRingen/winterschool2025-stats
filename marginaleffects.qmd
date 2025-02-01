@@ -20,8 +20,9 @@ This session is about how statistics can be in service of science.
     - But a lot gets lost in translation, particularly when we try to translate back to substantive scientific questions from the output of statistical models.
 
 - Goals:
-    - Teach you a very general way to translate statistical models back into substantive scientific questions.
-    - 
+    - Part 1: Teach you a very general way to translate statistical models back into substantive scientific questions.
+    - Part 2: 
+
 
 # Part 1: Marginal effects
 
@@ -123,6 +124,10 @@ $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
   - To make a prediction for a monolingual child, just take the intercept ($\alpha$).
   - To make a prediction for a multilingual child, add the coefficient for multilingual ($\beta$) to the intercept.
 - Linear regression is such a simple machine that it offers a 1:1 mapping between the parameters and the estimand (average difference between bilingual and monolingual children).
+
+## Interactions
+
+![](figures/hall_of_mirrors.png)
 
 ## Interactions imply heterogeneity
 
@@ -331,7 +336,7 @@ summary(logistic_model)
 
 ## Logistic regression
 
-![](figures/logistic_compression.png){width="70%"}
+![](figures/logistic_compression.png){width="50%"}
 
 - Even with just a single predictor, we cannot get our estimate from looking at model coefficients. 
 
@@ -356,11 +361,13 @@ AME |>
 plot_predictions(logistic_model, condition = list("condition"))
 ```
 
+- NOTE: I should write out the estimate in line with the original goal to make the outputs easier to report and interpret.
+
 ## Log-linear models
 
 Example: reaction time to a stimulus
 
-$$ 
+$$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
 
 ## Non-linear effects
 
@@ -375,46 +382,19 @@ $$
 - Marginal effect at the mean (MEM): 
     - 
 
+## Bigger picture
+
+- Interpreting regression models is a full of traps that can substantivey change our conclusions. Working with predictions and marginal effects allows us to avoid many of these traps.
 
 ## Average slopes
 
 - Rather than setting everything to the mean, what is the average slope if we changed the predictor by a very small amount?
 
-
-- What if we want to contrast the effect of bilingualism at different levels of age?
-- Quadratic terms:
-
-$$ \text{Cognitive flexibility} = \alpha + \beta \text{Multilingual} + \beta \text{Age} + \beta \text{Multilingual} \times \text{Age} + \epsilon $$
-
-## Generalized linear models
-
-- non-collapsiblity of odds ratios
-- sign-reversals on the log scale!
-
-## Marginal effects in practice
-
-- average marginal effect (aka average treatment effect)
-
-## Conditional effects
-
-- we may wish to calculate the effect of multilingualism across different strata (i.e., age)
-- rather than leave age as their original values, we hold them constantle')
-
-## Non-linearity, continous treatment effects
-
-- average slopes!
-- given a very small change in the predictor, what is the change in the outcome?
-
-### Interpreting regression models is a full of traps that can substantivey change our conclusions. Working with predictions and marginal effects allows us to avoid many of these traps.
-
-```{r}
-library(marginaleffects)
-
-avg_comparisons(m_centered)
-avg_comparisons(m_uncentered)
-```
-
 ## Can marginal effects improve the reliability of science?
+
+- On the one hand, we can avoid falling into many of the traps of interpreting model parameters.
+
+- On the other hand, this way of doing things brings the *estimand* into focus. We are being more explicit about the quantity we are trying to estimate--which is not tied to any particular model.
 
 ## Red Card Dataset (many analysts)
 
@@ -423,48 +403,21 @@ avg_comparisons(m_uncentered)
 
 ## Many analysts, many estimates
 
+- Given an underspecified research questions, many analysts will come up with many different estimates.
+
 ![](figures/many_analysts1.png)
 
 ## But what is the estimand?
+
+- If we restrict to the estimates that are all consistent with a commmon estimand, much more agreement among analysts.
 
 ![](figures/many_analysts2.png)
 
 
 ----
 
-### So we start out advocating for unit-specific contrasts, but then we realize that we need to make a choice about what we want to contrast. So need to define the estimand, and the connection between theory, estimand, and estimator.
-
-### If we continue to interpret the model parameters as if it was a simple linear regression, then we are letting the model dictate the estimand. In this sense, the mechanistic details of the statistical model are changing the estimand, and therefore the scientific question.
-
-## Problems with parameters
-
-- Quantitative research relies on models with many moving parts (i.e., parameters).
-
-- In all but the simplest models, no single parameter can answer our research question. Direct interpretation of model coefficients is unintuitive at best, misleading at worst.
-
-- We can do better. Use the model to calculate *marginal effects* that are easy to interpret and communicate.
-    - marginal effects are unit-specific contrasts, i.e., between two groups or between values of a continuous predictor.
-    - The `marginaleffects` package makes these calculations easy for a wide range of models in both R and Python.
-
-# Formally defining the estimand
-
-- For a given child, let $Y_i(\text{bilingual})$ be the outcome if the child is bilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{bilingual}) - Y_i(\text{monolingual})]$.
-
-- In other words, we imagine that we could randomly assign each child to be bilingual or monolingual, and then observe the difference in their individual outcomes. So, how does this connect to our model?
-
-- Recall our simple linear model: $Y_i = \alpha + \beta \text{bilingual}_i + \epsilon_i$
-
-- For each child $i$, the expected value of the outcome if the child is bilingual is $Y_i(\text{bilingual})$ = $\alpha + \beta$.
-- The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha$.
-- Therefore the average difference in potential outcomes is simply ($\alpha + \beta$) - $\alpha$ = $\beta$.
-    - It will almost never be this simple in real research contexts.
-
 # Why we need to define the estimand
 - Redcard dataset: diferences between analysts dissipates once we clearly define the estimand.
-
-# Interactions
-
-![](figures/hall_of_mirrors.png)
 
 # Adding complexity: interactions
 
