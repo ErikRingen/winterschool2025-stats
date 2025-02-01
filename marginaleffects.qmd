@@ -13,16 +13,14 @@ format:
 ## Introduction
 
 This session is about how statistics can be in service of science.
-- That point might sound mundane, but I think it is actually profound.
 
 - Key ideas:
-    - Scientist have to learn the language of statistical models
-    - But a lot gets lost in translation, particularly when we try to translate back to substantive scientific questions from the output of statistical models.
+    - Scientist learn the language of statistical models in order to do their work
+    - But a lot gets lost in translation when we try to translate back to substantive scientific questions from the output of statistical models
 
 - Goals:
     - Part 1: Teach you a very general way to translate statistical models back into substantive scientific questions.
-    - Part 2: 
-
+    - Part 2: Discuss the workflow of statistical computing
 
 # Part 1: Marginal effects
 
@@ -413,41 +411,11 @@ $$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
 
 ![](figures/many_analysts2.png)
 
-
 ----
 
-# Why we need to define the estimand
-- Redcard dataset: diferences between analysts dissipates once we clearly define the estimand.
-
-# Adding complexity: interactions
-
-- What if the effect of bilingualism depends on the child's age (an interaction term)?
-- Formula: $Y_i = \alpha + \beta \text{bilingual}_i + \gamma \text{age}_i + \delta \text{bilingual}_i \times \text{age}_i + \epsilon_i$
-- For each child $i$, the expected value of the outcome if the child is bilingual is $Y_i(\text{bilingual})$ = $\alpha + \beta + \gamma \text{age}_i + \delta \text{age}_i$.
-- The expected value of the outcome if the child is monolingual is $Y_i(\text{monolingual})$ = $\alpha + \gamma \text{age}_i$.
-- The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{bilingual}) - Y_i(\text{monolingual})] = \frac{1}{N} \sum_{i=1}^N [(\alpha + \beta + \gamma \text{age}_i + \delta \text{age}_i) - (\alpha + \gamma \text{age}_i)] = \frac{1}{N} \sum_{i=1}^N (\beta + \delta \text{age}_i) = \beta + \delta \bar{\text{age}}$.
-- Thus, the marginal effect is no longer reducible to a single parameter.
-
-# Once we start using generalized linear models, everything interacts!
-
-
-# Many types of marginal effects
-
-- Average marginal effect
-- Marginal effect at the mean
-- Conditional marginal effect
-- Average slope
-- Takeaway: statisticians are terrible at naming things.
-
----
+## Many choices of estimand, more effort needed in science to connect theory to the quantities we report in our papers
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
-
----
-
-![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow_highlight.png)
-
-### A regression is a machine with many moving parts
 
 ## Hands on session
 
@@ -465,6 +433,16 @@ This section is about computation, but it is also about anxiety and the fear of 
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
 - Not totally wrong, but leads to anxiety
+
+## Academic time allocation
+
+- Academics consistently underestimate the time it takes to do...everything
+    - coding tasks most under-estimated!
+
+## Harsh realities
+
+- We feel that we should be going faster
+- Anxiety about making mistakes
 
 ## Code review anxiety
 
