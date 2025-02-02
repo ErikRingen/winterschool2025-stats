@@ -137,11 +137,11 @@ $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
 :::: {.columns}
 
 ::: {.column width="60%"}
-- If we add an interaction term (moderator) to our model, the estimand is no longer reducible to a single parameter.
-- To see why, let's formalize the estimand:
-  - For a given child, let $Y_i(\text{multilingual})$ be the outcome if the child is multilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. 
-  - The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{multilingual}) - Y_i(\text{monolingual})]$. Known as the *average treatment effect* (ATE), or average marginal effect (AME).
-  - In our simple linear regression, all children are identical, conditional on their mono/multilingual status, which allows us to reduce the estimand to a single parameter.
+- For a given child, let $Y_i(\text{multilingual})$ be the outcome if the child is multilingual and $Y_i(\text{monolingual})$ be the outcome if the child is monolingual. 
+
+- The estimand is the average difference in potential outcomes: $\frac{1}{N} \sum_{i=1}^N [Y_i(\text{multilingual}) - Y_i(\text{monolingual})]$. Known as the *average treatment effect* (ATE), or average marginal effect (AME).
+
+- In our simple linear regression, all children are identical, conditional on their mono/multilingual status, which allows us to reduce the estimand to a single parameter.
 :::
 
 ::: {.column width="40%"}
@@ -207,10 +207,6 @@ ggplot(d, aes(x = age, y = cognitive_flexibility, color = multilingual)) +
 ```
 :::
 ::::
-
-- The data visualization looks the same, but the model seems to be telling us something different.
-    - In fact, the effect we are seeking is 'lost in translation'.
-    - By generating predictions from the model, these contradictions will melt away.
 
 ## Getting started with `marginaleffects`: predictions
 
@@ -475,8 +471,6 @@ Controlled direct effect: $E[Y(\text{dark}) - Y(\text{light}) | M = m]$
 ![](figures/many_analysts2.png)
 
 ----
-
-## More effort needed in science to connect theory to the quantities we report in our papers
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
 
