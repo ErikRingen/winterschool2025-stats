@@ -19,7 +19,7 @@ This session is about how statistics can be in service of science.
     - But a lot gets lost in translation when we try to translate back to substantive scientific questions from the output of statistical models
 
 - Goals:
-    - Part 1: Teach you a very general way to translate statistical models back into substantive scientific questions.
+    - Part 1: Teach you a very general method to translate statistical models back into substantive scientific questions
     - Part 2: Discuss the workflow of statistical computing
 
 # Part 1: Marginal effects
@@ -361,6 +361,13 @@ plot_predictions(logistic_model, condition = list("condition"))
 
 - NOTE: I should write out the estimate in line with the original goal to make the outputs easier to report and interpret.
 
+## But how does it work?
+
+- For frequentist models, `marginaleffects` by default uses the delta method of numerical differentiation to calculate standard errors
+    - Various bootstrap and weighting methods supported
+
+- For Bayesian models (e.g., fit with `brms`), `marginaleffects` uses the same method, but with full posterior draws rather than approximate standard errors
+
 ## Log-linear models
 
 Example: reaction time to a stimulus
@@ -397,32 +404,65 @@ $$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
 
 - On the one hand, we can avoid falling into many of the traps of interpreting model parameters.
 
-- On the other hand, this way of doing things brings the *estimand* into focus. We are being more explicit about the quantity we are trying to estimate--which is not tied to any particular model.
+- On the other hand, this way of doing things brings the *estimand* into focus. We are being more explicit about the quantity we are trying to estimate--*which is not tied to any particular model.*
 
-## Red Card Dataset (many analysts)
+## Red Card Dataset
 
-- Football players who were red-carded for conduct in the 2018-2019 season.
-- 100+ analysts, 100+ estimates (check this!)
+2,053 soccer players in the first male divisions of England, Germany, France, and Spain in the 2012–2013 season.
+
+Outcome: number of red cards recieved for 146,028 player-referee dyads.
+
+![](figures/red_card_in_soccer.jpg){width="50%"}
 
 ## Many analysts, many estimates
 
-- Given an underspecified research questions, many analysts will come up with many different estimates.
+"Are soccer players with dark skin tone more likely than those with light skin tone to receive red cards from referees?"
+
+![](figures/many_analysts_title.png){width="65%"}
+
+## Many analysts, many estimates
+
+"Are soccer players with dark skin tone more likely than those with light skin tone to receive red cards from referees?"
+
+![](figures/many_analysts_results.jpeg){width="80%"}
+
+----
+
+![](figures/hidden_universe_uncertainty.png){width="80%"}
+
+----
+
+## Who watches the watchmen? Reanalysis of the meta-analysis
+
+![](figures/many_analysts_reanalysis.png){width="80%"}
+
+## Many analysts, many *estimands*
+
+![](figures/causal_diagrams_RQ.jpeg){width="80%"}
+
+"Thus, we argue that the results obtained in the CSI showed such a large variation because the 29 teams pursued (at least) four different research questions and therefore used different research designs."
+
+----
 
 ![](figures/many_analysts1.png)
 
-## But what is the estimand?
+----
 
-- If we restrict to the estimates that are all consistent with a commmon estimand, much more agreement among analysts.
+Controlled direct effect: $E[Y(\text{dark}) - Y(\text{light}) | M = m]$
 
 ![](figures/many_analysts2.png)
 
 ----
 
-## Many choices of estimand, more effort needed in science to connect theory to the quantities we report in our papers
+## More effort needed in science to connect theory to the quantities we report in our papers
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
 
-## Breakout session (10 minutes)
+## Many choices of estimand
+
+
+
+## Breakout session (10-15 minutes)
 
 Goal:
     - Write down the *estimand* for one of your research questions
@@ -455,7 +495,8 @@ Statistics can feel like a thankless list of things that all have to be right or
 ## Harsh realities
 
 - We feel that we should be going faster
-- Anxiety about making mistakes
+- The more we improve statistical practice in science, the more we ask of scientists
+- We need workflows that help keep us sane
 
 ## Code review anxiety
 
@@ -481,21 +522,4 @@ Problems in statistical computing are often caused by problems in the model/data
 - Specification curves
 - Key idea: figure out sensitivity of estimates to reasonable range of model specifications, and which qualitative insights are robust to these choices.
 
-:::: {.columns}
 
-::: {.column width="50%"}
-```{r}
-# Model with standardized age
-summary(lm(cognitive_flexibility ~ multilingual * age_s))
-```
-:::
-
-::: {.column width="50%"}
-```{r}
-# Model with raw age
-summary(lm(cognitive_flexibility ~ multilingual * age))
-```
-:::
-::::
-
-:::
