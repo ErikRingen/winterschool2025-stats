@@ -1,6 +1,6 @@
 ---
 title: "Making statistics work for (evolutionary language) scientists"
-subtitle: "TTF DataScience"
+subtitle: "TTF DataScience, WP Statistics"
 author: "Erik J. Ringen"
 format:
   revealjs:
@@ -32,17 +32,18 @@ In this session I will use:
 - The following R packages:
     - `marginaleffects`
     - `tidyverse`
-    - `mgcv` (tangentially)
     - `targets`
+    - `mgcv` (tangentially)
+    - `knitr` (for rendering outputs)
 
-Quarto markdown for this session here:
+Quarto markdown and code here (optional):
 
 
 # Part 1: Marginal effects
 
 ## About me
 
-- I earned my PhD in Evolutionary Anthropology <span class="fragment strike">during the 447th lunation of the third millennium, when Mars was at an orbital longitude of ~187 degrees</span><span class="fragment"> in May 2023</span>
+- I earned my PhD in Evolutionary Anthropology <span class="fragment strike">during the 433rd lunation of the third millennium, when Mars was at an orbital longitude of ~311 degrees</span><span class="fragment"> in May 2022</span> 
 
 - To get from Zurich to here, I travelled <span class="fragment strike">807 light-microseconds</span><span class="fragment"> 242 kilometers</span>
 
@@ -76,12 +77,16 @@ cognitive_flexibility  <- pnorm(cognitive_flexibility) * 100
 
 d <- data.frame(multilingual = ifelse(multilingual == 0, "monolingual", "multilingual"), cognitive_flexibility = cognitive_flexibility, age = age, age_c = age_c)
 
+theme_set(theme_classic(base_size = 24))
+
 ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)) +
     geom_jitter(alpha = 0.7, width = 0.05) +
     geom_boxplot(alpha = 0.1) +
-    theme_classic(base_size = 24) +
     theme(legend.position = "none") +
     labs(x = "", y = "Cognitive flexibility score")
+
+# export data for targets example
+write_csv(d, "data/cognitive_flexibility.csv")
 ```
 
 '`r paste0("Monolingual participants have a mean cognitive flexibility score of ", 
@@ -111,7 +116,7 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 - Example: do multilingual children have greater cognitive flexibility than monolingual children?
     - *Data*: 200 children from some population
     - *Estimand*: what is the average difference in cognitive flexibility (measured by a psychometric instrument ranging from 0 to 100) between multilingual and monolingual children?
-    - *Estimate*: 'Multilingual participants have an average cognitive flexibility score of 11.908 [5.386, 18.430] points higher than monolingual participants.'
+    - *Estimate*: 'Multilingual participants have an average cognitive flexibility score of `r round(coef(lm(cognitive_flexibility ~ multilingual))["multilingual"], 3)` [`r round(confint(lm(cognitive_flexibility ~ multilingual))["multilingual",1], 3)`, `r round(confint(lm(cognitive_flexibility ~ multilingual))["multilingual",2], 3)`] points higher than monolingual participants.'
 :::
 
 ::: {.column width="40%"}
@@ -120,7 +125,6 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)) +
     geom_jitter(alpha = 0.7, width = 0.05) +
     geom_boxplot(alpha = 0.1) +
-    theme_classic(base_size = 24) +
     theme(legend.position = "none") +
     labs(x = "", y = "Cognitive flexibility")
 ```
@@ -146,7 +150,7 @@ $$ \epsilon \sim \text{Normal}(0, \sigma^2) $$
 
 ## Interactions
 
-![](figures/hall_of_mirrors.png){width="65%"}
+![](figures/hall_of_mirrors.png){width="80%"}
 
 ## Interactions imply heterogeneity
 
@@ -184,7 +188,6 @@ summary(m_centered)
 ggplot(d, aes(x = age_c, y = cognitive_flexibility, color = multilingual)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
-    theme_classic(base_size = 28) +
     theme(legend.title = element_blank()) +
     scale_color_manual(values = c("monolingual" = "royalblue", 
                                 "multilingual" = "darkorange")) +
@@ -215,7 +218,6 @@ summary(m_uncentered)
 ggplot(d, aes(x = age, y = cognitive_flexibility, color = multilingual)) +
     geom_point(alpha = 0.7) +
     geom_smooth(method = "lm", se = FALSE) +
-    theme_classic(base_size = 28) +
     theme(legend.title = element_blank()) +
     scale_color_manual(values = c("monolingual" = "royalblue", 
                                 "multilingual" = "darkorange")) +
@@ -236,7 +238,7 @@ preds <- predictions(uncentered_model)
 preds |> 
     as.data.frame() |> 
     select(rowid, multilingual, age, estimate, conf.low, conf.high) |> 
-    print(digits = 2)
+    knitr::kable(digits = 2)
 ```
 
 ## Getting started with `marginaleffects`: predictions
@@ -251,7 +253,7 @@ preds <- predictions(centered_model)
 preds |> 
     as.data.frame() |> 
     select(rowid, multilingual, age_c, estimate, conf.low, conf.high) |> 
-    print(digits = 2)
+    knitr::kable(digits = 2)
 ```
 
 ## From predictions to comparisons
@@ -262,7 +264,7 @@ comparisons <- comparisons(uncentered_model, variables = "multilingual")
 comparisons |> 
     as.data.frame() |> 
     select(rowid, contrast, age, estimate, conf.low, conf.high) |> 
-    print(digits = 2)
+    knitr::kable(digits = 2)
 ```
 
 ## Calcualting average marginal effects
@@ -273,7 +275,7 @@ AME <- avg_comparisons(uncentered_model)
 AME |> 
     as.data.frame() |> 
     select(term, contrast, estimate, conf.low, conf.high) |> 
-    print(digits = 2)
+    knitr::kable(digits = 2)
 ```
 
 ## marginaleffects can also make plots
@@ -301,7 +303,6 @@ Because the plots are made with `ggplot2`, we can customize them as we like.
 ```{r, echo = T}
 #| out.width: "75%"
 plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
-    theme_classic(base_size = 24) +
     theme(legend.title = element_blank()) +
     scale_color_manual(values = c("monolingual" = "royalblue", 
                                 "multilingual" = "darkorange")) +
@@ -312,10 +313,20 @@ plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
 
 ## Generalized linear models
 
+:::: {.columns}
+
+::: {.column width="60%"}
 - GLMs such as logistic regression and Poisson regression are also supported by `marginaleffects`.
 
 - Good news for us, because *everything* interacts in a GLM due to the link function (e.g., logit, log, softmax). 
     - Extremely easy to mislead ourselves if we try to interpret parameters.
+:::
+
+::: {.column width="40%"}
+![](figures/inference.jpg)
+:::
+
+::::
 
 ## Logistic regression
 
@@ -344,7 +355,7 @@ $$ \text{Agent} \sim \text{Bernoulli}(\pi) $$
 $$ \pi = \text{logit}^{-1}(\alpha + \beta \times \text{experimental}) $$
 
 ```{r}
-logistic_model <- glm(agent ~ condition, data = d, family = binomial)
+logistic_model <- glm(agent ~ condition, data = d, family = binomial(link = "logit"))
 
 summary(logistic_model)
 ```
@@ -383,7 +394,7 @@ AME |>
 
 ```{r, echo = T}
 #| out.width: "70%"
-plot_predictions(logistic_model, condition = list("condition")) + theme_classic(base_size = 24) + ylab("Pr(Agent)")
+plot_predictions(logistic_model, condition = list("condition")) + ylab("Pr(Agent)")
 ```
 
 - NOTE: I should write out the estimate in line with the original goal to make the outputs easier to report and interpret.
@@ -444,7 +455,6 @@ d <- data.frame(
 ggplot(d, aes(x=log_density, y=structural_diversity)) +
   geom_point(alpha=0.7) +
   geom_smooth(method="gam", formula = y ~ s(x, k=8)) +  # increased k for more wiggles
-  theme_classic(base_size = 18) +
   labs(x="Log population density", 
        y="Structural diversity\n(normalized entropy)") +
   ylim(0, 1)
@@ -455,26 +465,24 @@ ggplot(d, aes(x=log_density, y=structural_diversity)) +
 ```{r}
 #| out.width: "60%"
 library(mgcv)
-gam_model <- mgcv::gam(structural_diversity ~ s(log_density))
+gam_model <- mgcv::gam(structural_diversity ~ s(log_density, k = 8))
 
 summary(gam_model)
 ```
 
 ## Non-linear effects
 
-:::: {.columns}
-::: {.column width="50%"}
 ```{r, echo = T}
+#| out.width: "30%"
 slopes_df <- slopes(gam_model) |> 
     as.data.frame() |> 
     dplyr::select(estimate, conf.low, conf.high, log_density, structural_diversity)
 
-print(slopes_df, digits = 2)
+print(head(slopes_df), digits = 2)
 ```
-:::
 
-::: {.column width="50%"}
 ```{r}
+#| out.width: "80%"
 # Create segments for slopes
 slope_segments <- slopes_df |>
     dplyr::slice(seq(1, n(), by = 10)) |>
@@ -497,12 +505,9 @@ ggplot() +
                 aes(x = x_start, xend = x_end, 
                     y = y_start, yend = y_end),
                 color = "red", size = 1) +
-    theme_classic(base_size = 18) +
     labs(x = "Log population density",
          y = "Structural diversity")
 ```
-:::
-::::
 
 ## Non-linear effects: average slopes
 
@@ -512,20 +517,20 @@ $\mathbb{E}\left[\frac{\partial \text{structural diversity}}{\partial \text{ log
 avg_slopes(gam_model) |> 
     as.data.frame() |> 
     dplyr::select(term, estimate, conf.low, conf.high) |> 
-    print(digits = 2)
+    knitr::kable(digits = 2)
 ```
 
 
-## Bigger picture
+## The bigger picture
 
-- Interpreting regression models is a full of traps that can substantivey change our conclusions. Working with predictions and marginal effects allows us to avoid many of these traps.
+- Directly interpreting statistical models is a full of traps that can mislead us. Working with predictions and marginal effects allows us to avoid many of these traps.
 
 - marginaleffects can be used with a huge array of models:
-    - linear models, generalized linear models  (e.g., 'lm', 'glm')
-    - generalized additive models (e.g., 'mgcv', 'gamm4')
-    - multilevel models (e.g., 'lme4', 'glmmTMB')
-    - Bayesian models (e.g., 'brms')
-    - machine learning models (e.g., 'tidymodels', 'mlr3')
+    - linear models, generalized linear models  (e.g., `lm`, `glm`)
+    - generalized additive models (e.g., `mgcv`, `gamm4`)
+    - multilevel models (e.g., `lme4`, `glmmTMB`)
+    - Bayesian models (e.g., `brms`)
+    - machine learning models (e.g., `tidymodels`, `mlr3`)
 
 ## Can marginal effects improve the reliability of science?
 
@@ -538,6 +543,8 @@ avg_slopes(gam_model) |>
 2,053 soccer players in the first male divisions of England, Germany, France, and Spain in the 2012–2013 season.
 
 Outcome: number of red cards recieved for 146,028 player-referee dyads.
+
+Covariates: player and referee traits, match statistics
 
 ![](figures/red_card_in_soccer.jpg){width="50%"}
 
@@ -592,10 +599,12 @@ Causal (not statistical) assumptions needed to inform research design
 
 ## Breakout session (10-15 minutes)
 
-Goal:
-    - Write down the *estimand* for one of your research questions
-        - Remember: this is a unit-specific comparison, ideally with reference to a specific population.
-    - Draft a statistical model that you could use as your *estimator*
+Goals:
+
+(1) Write down the *estimand* for one of your research questions
+    - Remember: this is a unit-specific comparison, ideally with reference to a specific population.
+
+(2) Draft a statistical model that you could use as your *estimator*
     - Write down the marginaleffects code that would yield your *estimate*
     - If you don't have the relevant software on your laptop, find a neighbor who does.
     - Pseudocode is fine!
@@ -609,14 +618,15 @@ Goal:
 ---
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
-    - Not totally wrong, but leads to anxiety
+- Not totally wrong, but leads to anxiety
+
 - Calls to improve statistical practice in science imply time commitments:
     - More time for training
     - More time for coding tasks (recall the multiverse)
 
 ## Academic time allocation
 
-![](figures/time_allocation.png){width="75%"}
+![](figures/time_allocation.png){width="60%"}
 
 Brauer, K. (2021). " I'll Finish It This Week" And Other Lies. arXiv preprint arXiv:2103.16574.
 
@@ -635,22 +645,65 @@ Brauer, K. (2021). " I'll Finish It This Week" And Other Lies. arXiv preprint ar
 
 ## `targets`
 
+Package for reproducible research pipelines by Will Landau:
+
 - Encodes every step of your data analysis as a directed acyclic graph
 
-- Automatically detects dependencies between parts of your pipeline, which means:
-    - If you change some part of your pipeline, `targets` will rerun (only) the parts that depend on that part.
+- Automatically detection of dependencies, which means:
+    - If you change some part of your pipeline, `targets` will rerun (only) the parts that depend on the changed part.
 
-## Use one of the synthetic datasets from Part 1
+## Cognitive flexibility example
+
+```{r, eval = F, echo = T}
+# _targets.R file
+library(targets)
+
+tar_source() # load the R scripts in my dir
+tar_option_set(packages = c("tidyverse", "marginaleffects")) # load any packages used
+# define pipeline
+list(
+    tar_target(data_file, "data/cognitive_flexibility.csv", format = "file"),
+    tar_target(data, read_csv(data_file)),
+    tar_target(model, fit_model(data)),
+    tar_target(treatment_effect, marginaleffects(model, newdata = data, variables = "condition")),
+    tar_target(slopes_df, as.data.frame(slopes))
+)
+```
 
 ## tar_visnetwork()
 
+```{r}
+library(targets)
+tar_delete(everything()) # reset the pipeline
+```
+
+```{r, echo=T}
+tar_visnetwork()
+```
 ## tar_make()
+
+```{r, echo=T}
+tar_make()
+```
+
+## Re-check the pipeline
+```{r, echo=T}
+tar_visnetwork()
+```
 
 ## See what happens if we change the data
 
 ## See what happens if we change the plot
 
 ## Example of how this works at scale (Vanessa paper)
+
+## Advanced use of `targets`
+
+- Dynamic branching patterns, when there are too many targets to specify manually
+
+- Great support for parallel processing using `future`
+
+## Conclusion / Q&A
 
 
 
