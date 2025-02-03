@@ -32,6 +32,8 @@ This session is about how statistics can be in service of science.
 
 - To get from Zurich to here, I travelled <span class="fragment strike">807 light-microseconds</span><span class="fragment"> 242 kilometers</span>
 
+- The units we use to communicate matter!
+
 ## The way we report statistics is often confusing (and misleading)
 
 ![](figures/confusing_stats.png)
@@ -357,7 +359,6 @@ curve(plogis(x + coef(logistic_model)["conditionexperimental"]) - plogis(x), fro
 ## *marginaleffects* to the rescue
 
 ```{r, echo = T}
-#| out.width: "75%"
 AME <- avg_comparisons(logistic_model, variables = "condition")
 
 AME |> 
@@ -367,7 +368,8 @@ AME |>
 ```
 
 ```{r, echo = T}
-plot_predictions(logistic_model, condition = list("condition"))
+#| out.width: "70%"
+plot_predictions(logistic_model, condition = list("condition")) + theme_classic(base_size = 24) + ylab("Pr(Agent)")
 ```
 
 - NOTE: I should write out the estimate in line with the original goal to make the outputs easier to report and interpret.
@@ -378,6 +380,8 @@ plot_predictions(logistic_model, condition = list("condition"))
     - Various bootstrap and weighting methods supported
 
 - For Bayesian models (e.g., fit with `brms`), `marginaleffects`, uses full posterior draws
+
+- More info: https://marginaleffects.com/chapters/uncertainty.html
 
 ## Log-linear models
 
@@ -503,25 +507,17 @@ avg_slopes(gam_model) |>
     print(digits = 2)
 ```
 
-## Marginal effect at the mean
-
-- So far, we have been calculating average marginal effects (AMEs), where we make comparisons changing only the predictor of interest.
-
-- Marginal effect at the mean (MEM): 
-    - 
 
 ## Bigger picture
 
 - Interpreting regression models is a full of traps that can substantivey change our conclusions. Working with predictions and marginal effects allows us to avoid many of these traps.
 
-## Average slopes
-
-- Rather than setting everything to the mean, what is the average slope if we changed the predictor by a very small amount?
-
-## Custom comparisons
-
-- We don't have to use the default comparisons (group-contrasts or 1-unit changes)
-- Examples (with marginal effects code)
+- marginaleffects can be used with a huge array of models:
+    - linear models, generalized linear models  (e.g., 'lm', 'glm')
+    - generalized additive models (e.g., 'mgcv', 'gamm4')
+    - multilevel models (e.g., 'lme4', 'glmmTMB')
+    - Bayesian models (e.g., 'brms')
+    - machine learning models (e.g., 'tidymodels', 'mlr3')
 
 ## Can marginal effects improve the reliability of science?
 
@@ -575,13 +571,15 @@ Controlled direct effect: $E[Y(\text{dark}) - Y(\text{light}) | M = m]$; 486 par
 
 ![](figures/many_analysts2.png){width="75%"}
 
+## 
+
+Causal (not statistical) assumptions needed to inform research design
+
+![](figures/DAG_triangle.png)
+
 ----
 
-
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
-
-## Many choices of estimand
-
 
 
 ## Breakout session (10-15 minutes)
@@ -598,21 +596,18 @@ Goal:
 
 - How did it go? What friction did you encounter?
 
-# Part 2: Work-flow, code review. Fear is the mind killer
+# Part 2: Computational workflow (aka Fear is the mind killer)
 
-This section is about computation, but it is also about anxiety and the fear of making mistakes.
-
-## Truth: everyone has bugs in their code
-
-### Kim-Jung Gi drawing gif here. Disconnect between what we see in published reserach and how statistical modelling works in practice.
+---
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
 - Not totally wrong, but leads to anxiety
 
 ## Academic time allocation
 
-- Academics consistently underestimate the time it takes to do...everything
-    - coding tasks most under-estimated!
+![](figures/time_allocation.png){width="75%"}
+
+Brauer, K. (2021). " I'll Finish It This Week" And Other Lies. arXiv preprint arXiv:2103.16574.
 
 ## Harsh realities
 
@@ -621,6 +616,8 @@ Statistics can feel like a thankless list of things that all have to be right or
 - We need workflows that help keep us sane
 
 ## Code review anxiety
+
+### Kim-Jung Gi drawing gif here. Disconnect between what we see in published reserach and how statistical modelling works in practice.
 
 - 7 years ago, I had published my first, first-authored paper. The data and code were posted on GitHub.
 
