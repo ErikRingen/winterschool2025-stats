@@ -21,8 +21,22 @@ This session is about how statistics can be in service of science.
     - But a lot gets lost in translation when we try to translate back to substantive scientific questions from the output of statistical models
 
 - Goals:
-    - Part 1: Teach you a very general method to translate statistical models back into substantive scientific questions
-    - Part 2: Discuss the workflow of statistical computing
+    - Part 1: Teach you a general method to translate statistical models back into substantive scientific questions using `marginaleffects`
+    - Part 2: Managing the workflow of statistical computing using `targets`
+
+# Software
+
+In this session I will use:
+
+- R (latest version)
+- The following R packages:
+    - `marginaleffects`
+    - `tidyverse`
+    - `mgcv` (tangentially)
+    - `targets`
+
+Quarto markdown for this session here:
+
 
 # Part 1: Marginal effects
 
@@ -84,7 +98,7 @@ ggplot(d, aes(x = multilingual, y = cognitive_flexibility, color = multilingual)
 - What if we could do the same for statistical models?
 
 ## Predictions, not parameters
-- Main idea: rather than directly interpret parameters, use the model to make predictions
+- The central idea: rather than directly interpret parameters, use the model to make predictions
     - contrasts between different predictions consitute *marginal effects*
 - The `marginaleffects` package by Vincent Arel-Bundock makes these calculations easy for a wide range of models in both R and Python.
 
@@ -383,12 +397,6 @@ plot_predictions(logistic_model, condition = list("condition")) + theme_classic(
 
 - More info: https://marginaleffects.com/chapters/uncertainty.html
 
-## Log-linear models
-
-Example: reaction time to a stimulus
-
-$$ \text{Reaction time} = \alpha + \beta \times \text{Condition} + \epsilon $$
-
 ## Review thus far
 
 Reporting model results using `marginaleffects`:
@@ -596,12 +604,15 @@ Goal:
 
 - How did it go? What friction did you encounter?
 
-# Part 2: Computational workflow (aka Fear is the mind killer)
+# Part 2: Towards a less stressful computational workflow
 
 ---
 
 Statistics can feel like a thankless list of things that all have to be right or else *nothing* is right.
-- Not totally wrong, but leads to anxiety
+    - Not totally wrong, but leads to anxiety
+- Calls to improve statistical practice in science imply time commitments:
+    - More time for training
+    - More time for coding tasks (recall the multiverse)
 
 ## Academic time allocation
 
@@ -611,34 +622,37 @@ Brauer, K. (2021). " I'll Finish It This Week" And Other Lies. arXiv preprint ar
 
 ## Harsh realities
 
-- We feel that we should be going faster
-- The more we improve statistical practice in science, the more we ask of scientists
-- We need workflows that help keep us sane
+- Time allocation is a zero-sum game
+    - Time spent on doing better statistics is time that could be spent on the many other aspects of science and professional development
 
-## Code review anxiety
+- If raise the bar on statistical pracitce we need workflows that are reproducible, understandable, and which reduce cognitive burden.
 
-### Kim-Jung Gi drawing gif here. Disconnect between what we see in published reserach and how statistical modelling works in practice.
+## The tangled web of data analysis
 
-- 7 years ago, I had published my first, first-authored paper. The data and code were posted on GitHub.
+![](figures/tangled_web.png){width="75%"}
 
-- A few days after the paper went live, I got a notification for a pull request on my repo: Bret Beheim had found a bug in my code.
+- What happens when Reviewer #2 asks for a change to the data/model?
 
-- In the end, it was inconsequential. But it could have been a disaster.
+## `targets`
 
-### Slow is smooth, smooth is fast
+- Encodes every step of your data analysis as a directed acyclic graph
 
-### Fit fast, fail fast
+- Automatically detects dependencies between parts of your pipeline, which means:
+    - If you change some part of your pipeline, `targets` will rerun (only) the parts that depend on that part.
 
-- Recall that a regression is a machine with many moving parts. Just as we can't understand the joint behavior from the sum of the parts, we often cannot understand a model's failures from the individual parts.
+## Use one of the synthetic datasets from Part 1
 
-- Need to simply the model until it works, then gradually add back complexity to diagonose what went wrong.
+## tar_visnetwork()
 
-- Folk theorem of statistical computing: 
-Problems in statistical computing are often caused by problems in the model/data.
+## tar_make()
 
-## Multiverse of madness
+## See what happens if we change the data
 
-- Specification curves
-- Key idea: figure out sensitivity of estimates to reasonable range of model specifications, and which qualitative insights are robust to these choices.
+## See what happens if we change the plot
+
+## Example of how this works at scale (Vanessa paper)
+
+
+
 
 
