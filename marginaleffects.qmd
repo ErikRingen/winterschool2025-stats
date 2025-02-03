@@ -308,7 +308,7 @@ plot_predictions(uncentered_model, condition = list("age", "multilingual")) +
     - Estimand: what is the average *difference* in the probability of touching the 'Agent' side between two conditions ('experimental' vs 'control')?
         - $\frac{1}{N} \sum_{i=1}^N [P(Y_i = \text{Agent} | \text{experimental}) - P(Y_i = \text{Agent} | \text{control})]$
 
-![](figures/chimp_touchscreen.webp)
+![](figures/chimp_touchscreen.webp){width="50%"}
 
 ## Logistic regression
 
@@ -357,6 +357,7 @@ curve(plogis(x + coef(logistic_model)["conditionexperimental"]) - plogis(x), fro
 ## *marginaleffects* to the rescue
 
 ```{r, echo = T}
+#| out.width: "75%"
 AME <- avg_comparisons(logistic_model, variables = "condition")
 
 AME |> 
@@ -373,10 +374,10 @@ plot_predictions(logistic_model, condition = list("condition"))
 
 ## But how does it work?
 
-- For frequentist models, `marginaleffects` by default uses the delta method of numerical differentiation to calculate standard errors
+- For frequentist models, `marginaleffects` by default uses the delta method (Taylor series expansion)
     - Various bootstrap and weighting methods supported
 
-- For Bayesian models (e.g., fit with `brms`), `marginaleffects` uses the same method, but with full posterior draws rather than approximate standard errors
+- For Bayesian models (e.g., fit with `brms`), `marginaleffects`, uses full posterior draws
 
 ## Log-linear models
 
@@ -394,9 +395,113 @@ Reporting model results using `marginaleffects`:
 
 ## Non-linear effects
 
-- Often our hypotheses are only directional, and we don't anticipate or have specific hypotheses about non-linearity
+Example: relationship between population density and structural diversity in language (measured by normalized entropy)
 
-- Again, for GLMs, *all* continous effects are non-linear...
+```{r}
+library(MASS)  # for mvrnorm
+
+# Generate synthetic data
+set.seed(123)
+n <- 200
+
+# Create log-scaled population density
+log_density <- runif(n, -2, 8)
+
+# Create covariance matrix using squared exponential kernel
+dist_mat <- as.matrix(dist(log_density))
+sigma <- 0.55    # increased variance
+l <- 0.20       # decreased length scale for more wiggles
+K <- sigma^2 * exp(-dist_mat^2 / (2*l^2))
+
+# Generate smooth function values using Gaussian process
+diag(K) <- diag(K) + 0.5
+gp_component <- mvrnorm(1, mu=rep(0, n), Sigma=K)
+
+# Add linear trend and normalize
+linear_trend <- 0.3 * log_density  # linear component
+combined <- gp_component + linear_trend
+structural_diversity <- plogis(combined)
+
+# Create data frame
+d <- data.frame(
+  log_density = log_density,
+  structural_diversity = structural_diversity
+)
+
+# Plot
+ggplot(d, aes(x=log_density, y=structural_diversity)) +
+  geom_point(alpha=0.7) +
+  geom_smooth(method="gam", formula = y ~ s(x, k=8)) +  # increased k for more wiggles
+  theme_classic(base_size = 18) +
+  labs(x="Log population density", 
+       y="Structural diversity\n(normalized entropy)") +
+  ylim(0, 1)
+```
+
+## Non-linear effects
+
+```{r}
+#| out.width: "60%"
+library(mgcv)
+gam_model <- mgcv::gam(structural_diversity ~ s(log_density))
+
+summary(gam_model)
+```
+
+## Non-linear effects
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r, echo = T}
+slopes_df <- slopes(gam_model) |> 
+    as.data.frame() |> 
+    dplyr::select(estimate, conf.low, conf.high, log_density, structural_diversity)
+
+print(slopes_df, digits = 2)
+```
+:::
+
+::: {.column width="50%"}
+```{r}
+# Create segments for slopes
+slope_segments <- slopes_df |>
+    dplyr::slice(seq(1, n(), by = 10)) |>
+    mutate(
+        x_start = log_density - 0.25,
+        x_end = log_density + 0.25,
+        y_start = structural_diversity - (0.25 * estimate),
+        y_end = structural_diversity + (0.25 * estimate)
+    )
+
+ggplot() +
+    # Original data points
+    geom_point(data = d, aes(x = log_density, y = structural_diversity), 
+               alpha = 0.3) +
+    # GAM smooth
+    geom_smooth(data = d, aes(x = log_density, y = structural_diversity),
+                method = "gam", formula = y ~ s(x, k=8), color = "blue") +
+    # Slope segments
+    geom_segment(data = slope_segments,
+                aes(x = x_start, xend = x_end, 
+                    y = y_start, yend = y_end),
+                color = "red", size = 1) +
+    theme_classic(base_size = 18) +
+    labs(x = "Log population density",
+         y = "Structural diversity")
+```
+:::
+::::
+
+## Non-linear effects: average slopes
+
+$\mathbb{E}\left[\frac{\partial \text{structural diversity}}{\partial \text{ log pop density}}\right]$
+
+```{r, echo = T}
+avg_slopes(gam_model) |> 
+    as.data.frame() |> 
+    dplyr::select(term, estimate, conf.low, conf.high) |> 
+    print(digits = 2)
+```
 
 ## Marginal effect at the mean
 
@@ -462,15 +567,16 @@ Outcome: number of red cards recieved for 146,028 player-referee dyads.
 
 ----
 
-![](figures/many_analysts1.png)
+![](figures/many_analysts1.png){width="80%"}
 
 ----
 
-Controlled direct effect: $E[Y(\text{dark}) - Y(\text{light}) | M = m]$
+Controlled direct effect: $E[Y(\text{dark}) - Y(\text{light}) | M = m]$; 486 parametric models
 
-![](figures/many_analysts2.png)
+![](figures/many_analysts2.png){width="75%"}
 
 ----
+
 
 ![Three critical choices in quantitative research. From: Lundberg, I., Johnson, R., & Stewart, B. M. (2021). What is your estimand? Defining the target quantity connects statistical evidence to theory. American Sociological Review, 86(3), 532-565.](figures/estimand_flow.png)
 
