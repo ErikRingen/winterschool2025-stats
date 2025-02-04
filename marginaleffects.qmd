@@ -244,7 +244,7 @@ preds <- predictions(uncentered_model)
 
 preds |> 
     as.data.frame() |> 
-    select(rowid, multilingual, age, estimate, conf.low, conf.high) |> 
+    dplyr::select(rowid, multilingual, age, estimate, conf.low, conf.high) |> 
     knitr::kable(digits = 2)
 ```
 
@@ -259,7 +259,7 @@ preds <- predictions(centered_model)
 
 preds |> 
     as.data.frame() |> 
-    select(rowid, multilingual, age_c, estimate, conf.low, conf.high) |> 
+    dplyr::select(rowid, multilingual, age_c, estimate, conf.low, conf.high) |> 
     knitr::kable(digits = 2)
 ```
 
@@ -270,7 +270,7 @@ comparisons <- comparisons(uncentered_model, variables = "multilingual")
 
 comparisons |> 
     as.data.frame() |> 
-    select(rowid, contrast, age, estimate, conf.low, conf.high) |> 
+    dplyr::select(rowid, contrast, age, estimate, conf.low, conf.high) |> 
     knitr::kable(digits = 2)
 ```
 
@@ -281,7 +281,7 @@ AME <- avg_comparisons(uncentered_model)
 
 AME |> 
     as.data.frame() |> 
-    select(term, contrast, estimate, conf.low, conf.high) |> 
+    dplyr::select(term, contrast, estimate, conf.low, conf.high) |> 
     knitr::kable(digits = 2)
 ```
 
@@ -395,7 +395,7 @@ AME <- avg_comparisons(logistic_model, variables = "condition")
 
 AME |> 
     as.data.frame() |> 
-    select(term, contrast, estimate, conf.low, conf.high) |> 
+    dplyr::select(term, contrast, estimate, conf.low, conf.high) |> 
     print(digits = 2)
 ```
 
@@ -667,16 +667,14 @@ Package for reproducible research pipelines by Will Landau:
 
 ```{r, eval = F, echo = T}
 # _targets.R file
-library(targets)
-
-tar_source() # load the R scripts in my dir
+tar_source(files = "R") # load the R scripts in my dir
 tar_option_set(packages = c("tidyverse", "marginaleffects")) # load any packages used
 # define pipeline
 list(
     tar_target(data_file, "data/cognitive_flexibility.csv", format = "file"),
     tar_target(data, read_csv(data_file)),
     tar_target(model, fit_model(data)),
-    tar_target(treatment_effect, avg_comparisons(model, newdata = data, variables = "multilingual")),
+    tar_target(marginal_effect, avg_comparisons(model, newdata = data, variables = "multilingual")),
     tar_target(model_plot, plot_predictions(model, condition = list("multilingual")))
 )
 ```
@@ -685,7 +683,7 @@ list(
 
 ```{r}
 library(targets)
-# tar_delete(everything()) # reset the pipeline
+tar_destroy() # clear any targets from previous runs
 ```
 
 ```{r, echo=T}
@@ -694,16 +692,20 @@ tar_visnetwork()
 
 ## Looking inside in the pipeline?
 
-```{r, echo=T, eval = F}
+```{r, echo=T, eval = T}
 # fit_model.R
 fit_model <- function(data, age_moderator = TRUE){
     if(age_moderator){
-        model <- lm(agent ~ condition * age, data = data)
+        model <- lm(cognitive_flexibility ~ multilingual * age, data = data)
     } else {
-        model <- lm(agent ~ condition, data = data)
+        model <- lm(cognitive_flexibility ~ multilingual, data = data)
     }
     return(model)
 }
+```
+
+```{r}
+dump("fit_model", file = "R/fit_model.R")
 ```
 
 ## Running the pipeline
@@ -711,23 +713,33 @@ fit_model <- function(data, age_moderator = TRUE){
 tar_make()
 ```
 
+## Re-inspect the pipeline
 ```{r, echo=T}
 tar_visnetwork()
 ```
 
 ## See what happens if we change the data
+
+```{r, echo=F}
+tar_load(data)
+```
 
 ```{r, echo=T}
 # remove anomalous observations
 problematic_obs <- c(3, 15, 27)
 
-write_csv(d[-problematic_obs,], "data/cognitive_flexibility.csv")
+write_csv(data[-problematic_obs,], "data/cognitive_flexibility.csv")
+```
+
+
+
+```{r, echo=T}
+tar_visnetwork()
 ```
 
 ## See what happens if we change the data
 
 ```{r, echo=T}
-tar_visnetwork()
 tar_outdated()
 ```
 
@@ -737,8 +749,8 @@ tar_make()
 
 ## See what happens if we change the model function
 
-```{r, echo=T}
-# R/fit_model.R
+```{r, echo=T, eval = T}
+# R/fit_model.R, now with quadratic effect for age
 fit_model <- function(data, age_moderator = TRUE){
     if(age_moderator){
         model <- lm(cognitive_flexibility ~ multilingual * poly(age, 2), data = data)
@@ -749,7 +761,116 @@ fit_model <- function(data, age_moderator = TRUE){
 }
 ```
 
-## Example of how this works at scale (Vanessa paper)
+```{r}
+dump("fit_model", file = "R/fit_model.R")
+```
+
+## See what happens if we change the model function
+
+```{r, echo=T}
+#| out.width: "50%"
+tar_visnetwork()
+```
+
+## See what happens if we change the model function
+```{r, echo=T}
+tar_outdated()
+```
+
+## Real world example
+
+![](figures/eyetracking_example.png)
+
+- Big latent, multilevel timeseries model (>10,000 parameters)
+- Many outputs (effect sizes, constrasts, model visualizations, data dashboard)
+- Entire pipeline takes ~6 days to run
+
+## Targets at scale
+
+```{r}
+setwd("timeseries_analyses")
+tar_visnetwork()
+```
+
+## Targets at scale
+
+```{r, eval = F, echo = T}
+library(targets)
+source("R/functions.R")
+
+# Dependencies for this pipeline
+tar_option_set(packages = c(
+  "tidyverse",
+  "rethinking",
+  "rstan",
+  "patchwork",
+  "ggsci",
+  "RColorBrewer",
+  "cubelyr",
+  "proxy",
+  "foreach",
+  "doParallel",
+  "ggdist"
+))
+
+list(
+  # Extract raw data
+  tar_target(rdata_file,
+             "data/input-to-models.RData", format = "file"),
+  tar_target(footage_file,
+             "data/Study1_footage_details.xlsx"),
+  tar_target(infants_file,
+             "data/Infant_age.xlsx"),
+  tar_target(d_raw_time,
+             extract_raw_data(rdata_file, footage_file, infants_file, "time")),
+  
+  ## Generate data for Shiny dashboard #####
+  tar_target(d_dash,
+             dashboard_data(d_raw_time)),
+
+  # Data for time series model 
+  tar_target(d_time,
+             time_data(d_raw_time)),
+  
+  ## Generate data for time-averaged model comparison
+  tar_target(d_avg,
+             time_data_avg(d_time)),
+  
+  ###### Time Averaged Analyses #########################
+  tar_target(model_compare,
+             avg_model_comparison(d_avg)),
+  
+  ###### Time Series Analyses ##########################
+  # Fit time series model
+  tar_target(fit_time,
+             fit_time_series(d_time, n_iter = 1000, n_chains = 8)),
+  # Make predictions for time series
+  tar_target(pred_time,
+             pred_species_pid_time(fit_time, d_time)),
+  
+  # Make plots + export summaries of posterior predictions to .csv
+  # time series plots
+  tar_target(p_species_time_agent,
+             plot_species_time_AOI(pred_time, "Agent")),
+  tar_target(p_species_time_patient,
+             plot_species_time_AOI(pred_time, "Patient")),
+  tar_target(p_species_time_other,
+             plot_species_time_AOI(pred_time, "Other")),
+  tar_target(p_species_time_OR,
+             plot_species_time_OR(pred_time)),
+  tar_target(p_species_time_APO,
+             plot_species_time_OR_APO(pred_time)),
+  tar_target(p_species_time_AO,
+             plot_species_time_OR_AO(pred_time)),
+  # AOI size plots
+  tar_target(p_species_AOI_size,
+             plot_species_AOI_size(fit_time, d_time)),
+  # AP movement diff
+  tar_target(p_species_AP_md,
+             plot_species_AP_md(fit_time, d_time))
+  
+)
+```
 
 ## Advanced use of `targets`
 
