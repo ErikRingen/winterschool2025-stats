@@ -44,7 +44,7 @@ In this session I will use:
     - `mgcv` (tangentially)
     - `knitr` (for rendering outputs)
 
-Quarto markdown and code here (optional):
+Quarto markdown and code here (optional): https://github.com/ErikRingen/winterschool2025-stats
 :::
 
 # Part 1: Marginal effects
@@ -618,6 +618,8 @@ Goals:
     - Write down the marginaleffects code that would yield your *estimate*
     - If you don't have the relevant software on your laptop, find a neighbor who does.
     - Pseudocode is fine!
+
+Software (optional): https://github.com/ErikRingen/winterschool2025-stats
 
 :::
 
