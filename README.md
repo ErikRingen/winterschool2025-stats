@@ -14,7 +14,7 @@ c("tidyverse",
 )
 ```
 
-The `.qmd` file is Quarto markdown, which will render the slides from the winter school session. Quarto markdown can be rendered directly from the RStudio IDE, or from the command line.
+The `.qmd` file is Quarto markdown, which will render the slides from the winter school session. Quarto markdown can be rendered directly from the RStudio IDE, or from the command line. You can view the pre-rendered slides by opening `marginaleffects.html`.
 
 * Download Quarto from https://quarto.org/ and install it under the 'getting started' page. There is also a link to docs on how to use Quarto with either VS Code, Jupyter, RStudio, etc.
 
