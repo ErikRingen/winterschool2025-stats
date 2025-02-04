@@ -10,6 +10,7 @@ format:
     theme: default
     smaller: true
     margin: 0.05
+    embed-resources: true
 ---
 
 ## Introduction
@@ -274,7 +275,7 @@ comparisons |>
     knitr::kable(digits = 2)
 ```
 
-## Calcualting average marginal effects
+## Calculating average marginal effects
 
 ```{r, echo = T}
 AME <- avg_comparisons(uncentered_model)
@@ -549,7 +550,7 @@ avg_slopes(gam_model) |>
 
 2,053 soccer players in the first male divisions of England, Germany, France, and Spain in the 2012–2013 season.
 
-Outcome: number of red cards recieved for 146,028 player-referee dyads.
+Outcome: number of red cards received for 146,028 player-referee dyads.
 
 Covariates: player and referee traits, match statistics
 
@@ -646,7 +647,7 @@ Brauer, K. (2021). " I'll Finish It This Week" And Other Lies. arXiv preprint ar
 - Time allocation is a zero-sum game
     - Time spent on doing better statistics is time that could be spent on the many other aspects of science and professional development
 
-- If raise the bar on statistical pracitce we need workflows that are reproducible, understandable, and which reduce cognitive burden.
+- If raise the bar on statistical practice we need workflows that are reproducible, understandable, and which reduce cognitive burden.
 
 ## The tangled web of data analysis
 
@@ -660,7 +661,7 @@ Package for reproducible research pipelines by Will Landau:
 
 - Encodes every step of your data analysis as a directed acyclic graph
 
-- Automatically detection of dependencies, which means:
+- Automatic detection of dependencies, which means:
     - If you change some part of your pipeline, `targets` will rerun (only) the parts that depend on the changed part.
 
 ## Cognitive flexibility example
