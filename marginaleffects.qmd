@@ -24,8 +24,15 @@ This session is about how statistics can be in service of science.
     - Part 1: Teach you a general method to translate statistical models back into substantive scientific questions using `marginaleffects`
     - Part 2: Managing the workflow of statistical computing using `targets`
 
+## What this session is *not* about
+
+- Promoting any particular statistical model
+- Telling you what you 'should' be studying (statistician's fallacy)
+- Bayesian statistics
+
 # Software
 
+::: {.nonincremental}
 In this session I will use:
 
 - R (latest version)
@@ -37,7 +44,7 @@ In this session I will use:
     - `knitr` (for rendering outputs)
 
 Quarto markdown and code here (optional):
-
+:::
 
 # Part 1: Marginal effects
 
@@ -599,6 +606,8 @@ Causal (not statistical) assumptions needed to inform research design
 
 ## Breakout session (10-15 minutes)
 
+::: {.nonincremental}
+
 Goals:
 
 (1) Write down the *estimand* for one of your research questions
@@ -608,6 +617,8 @@ Goals:
     - Write down the marginaleffects code that would yield your *estimate*
     - If you don't have the relevant software on your laptop, find a neighbor who does.
     - Pseudocode is fine!
+
+:::
 
 ## Report-back/Q&A session
 
@@ -665,8 +676,8 @@ list(
     tar_target(data_file, "data/cognitive_flexibility.csv", format = "file"),
     tar_target(data, read_csv(data_file)),
     tar_target(model, fit_model(data)),
-    tar_target(treatment_effect, marginaleffects(model, newdata = data, variables = "condition")),
-    tar_target(slopes_df, as.data.frame(slopes))
+    tar_target(treatment_effect, avg_comparisons(model, newdata = data, variables = "multilingual")),
+    tar_target(model_plot, plot_predictions(model, condition = list("multilingual")))
 )
 ```
 
@@ -674,26 +685,69 @@ list(
 
 ```{r}
 library(targets)
-tar_delete(everything()) # reset the pipeline
+# tar_delete(everything()) # reset the pipeline
 ```
 
 ```{r, echo=T}
 tar_visnetwork()
 ```
-## tar_make()
 
+## Looking inside in the pipeline?
+
+```{r, echo=T, eval = F}
+# fit_model.R
+fit_model <- function(data, age_moderator = TRUE){
+    if(age_moderator){
+        model <- lm(agent ~ condition * age, data = data)
+    } else {
+        model <- lm(agent ~ condition, data = data)
+    }
+    return(model)
+}
+```
+
+## Running the pipeline
 ```{r, echo=T}
 tar_make()
 ```
 
-## Re-check the pipeline
 ```{r, echo=T}
 tar_visnetwork()
 ```
 
 ## See what happens if we change the data
 
-## See what happens if we change the plot
+```{r, echo=T}
+# remove anomalous observations
+problematic_obs <- c(3, 15, 27)
+
+write_csv(d[-problematic_obs,], "data/cognitive_flexibility.csv")
+```
+
+## See what happens if we change the data
+
+```{r, echo=T}
+tar_visnetwork()
+tar_outdated()
+```
+
+```{r, results = "hide"}
+tar_make()
+```
+
+## See what happens if we change the model function
+
+```{r, echo=T}
+# R/fit_model.R
+fit_model <- function(data, age_moderator = TRUE){
+    if(age_moderator){
+        model <- lm(cognitive_flexibility ~ multilingual * poly(age, 2), data = data)
+    } else {
+        model <- lm(cognitive_flexibility ~ multilingual, data = data)
+    }
+    return(model)
+}
+```
 
 ## Example of how this works at scale (Vanessa paper)
 
